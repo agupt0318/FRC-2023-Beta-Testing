@@ -1,25 +1,40 @@
+# Imports
 import cv2
 import time
-import math
+import math # might be used
 import logging
 import threading
-from pupil_apriltags import Detector
 
+from pupil_apriltags import Detector
 from networktables import NetworkTables as nt
 from cscore import CameraServer
 
-# # camera resolution settings
-# height = 180 # 720 / 180 / 225
-# width = 320 # 1280 / 320 / 400
+# CONSTANTS
 
-# # height of cam from the ground
-# cam_height = 69.420 # 69.850
+# camera resolution settings TODO: Recalculate width and height constants
+height = 180 # 720 / 180 / 225
+width = 320 # 1280 / 320 / 400
 
-# # error value for calculating FPS
+# error value for calculating FPS
 epsilon = 0.0000001
+
+# Table update function
+def table_update(table,store):
+    
+    # loop till the penultimate element and push that to nt
+    for i in range(len(store)-1):
+        table.putNumber(f"Tag {i} content: ",store[i])
+
+    # push the fps number to nt
+    table.putNumber("FPS: ",store[-1])
+
+# here when needed to translate tag id's into actions, perhaps
+def translator(tag_id):
+    pass
 
 def AprilTag_Detction():
 
+    # Define the tag detector
     at_detector = Detector(
     families="tag36h11",
     nthreads=1,
@@ -30,52 +45,74 @@ def AprilTag_Detction():
     debug=0
     )
 
+    # Infinite loop in which the program runs
     while True:
 
+        # time the iteration
         starttime = time.time()
 
+        # take one input from the camera
         frame = camera.read()[1]
-        # hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV) # convert to HSV
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
+        # Detect tags in the grayscale frame
         res = at_detector.detect(gray)
 
+        # store tag information computed later
+        tags = []
+
+        # loop through the tags detected in frame
         for i in res:
 
+            # Extract the corners of the tag
             (ptA, ptB, ptC, ptD) = i.corners
             ptA = (int(ptA[0]), int(ptA[1]))
             ptB = (int(ptB[0]), int(ptB[1]))
             ptC = (int(ptC[0]), int(ptC[1]))
             ptD = (int(ptD[0]), int(ptD[1]))
 
+            # Draw the tag bounding box on the frame
             cv2.line(frame, ptA, ptB, (0, 255, 0), 2)
             cv2.line(frame, ptB, ptC, (0, 255, 0), 2)
             cv2.line(frame, ptC, ptD, (0, 255, 0), 2)
             cv2.line(frame, ptD, ptA, (0, 255, 0), 2)
 
+            # Draw a circle at the center of the tag
             (cX, cY) = (int(i.center[0]), int(i.center[1]))
             cv2.circle(frame, (cX, cY), 5, (0, 0, 255), -1)
 
+            # Extract the id of the current tag and draw it near the center
             tagID = str(i.tag_id)
             cv2.putText(frame, tagID, (cX - 10, cY - 10),cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2, cv2.LINE_AA)
 
-        fps_int = round(1.0/(time.time()-starttime+epsilon),2)
-        fps = "FPS: "+str(fps_int)
-        cv2.putText(frame,fps,(60,60),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))[2]
+            # Add the tag id to to the tags list
+            tags.append(tagID)
 
-        cv2.imshow("Frame: ",frame)
-        cv2.waitKey(1)
+        # Compute FPS
+        fps_int = round(1.0/(time.time()-starttime+epsilon),2)
+
+        # fps = "FPS: "+str(fps_int)
+        # cv2.putText(frame,fps,(60,60),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))[2]
+
+        # Append the FPS to the end of tags
+        tags.append(fps_int)
+
+        # Update nt with the most current information
+        table_update(table,tags)
+
+        # Output the edited frame to nt, with all the tags highlighted and decoded
+        outputStream.putFrame(frame)
 
 if __name__ == '__main__':
 
-    # configure logging to see errors and warnings
+    # Configure logging to see errors and warnings
     logging.basicConfig(level=logging.DEBUG)
 
-    # intizalize a condition to notify a thread
+    # Intizalize a condition to notify a thread
     cond = threading.Condition()
     notified = [False]
     
-    # define the connection listner to connect to the rPi
+    # Define the connection listner to connect to the rPi
     def connectionListener(connected, info):
     
         print(info, '; Connected=%s' % connected)
@@ -83,32 +120,37 @@ if __name__ == '__main__':
             notified[0] = True
             cond.notify()
     
-    # initialize connection to the rPi
+    # Initialize connection to the rPi
     nt.initialize(server="10.26.38.2")
 
-    # listen for a connection
+    # Listen for a connection
     nt.addConnectionListener(connectionListener, immediateNotify=True)
     
-    # print waiting while not connected
+    # Print waiting while not connected
     with cond:
         print("Waiting")
         if not notified[0]:
             cond.wait()
 
-    # print connected when successfully connected
+    # Print connected when successfully connected
     print("Connected")
 
-    # get an instance of CameraServer
+    # Define the output table
+    table = nt.getTable('Tracked Tags')
+
+    # Get an instance of CameraServer
     cs = CameraServer.getInstance()
     
-#     # set up a video stream using opencv
+    # Set up a video stream using opencv
     camera = cv2.VideoCapture(0)
-    AprilTag_Detction()
 
-#     # camera settings ie width, height and brightness
-#     camera.set(3,width)
-#     camera.set(4,height)
-#     camera.set(10,0.45)
+    # Camera settings ie width, height and brightness.
+    camera.set(3,width)
+    camera.set(4,height)
+    camera.set(10,0.45)
     
-#     # This will send images back to the Dashboard
-#     outputStream = cs.putVideo("Balls Detected", width, height)
+    # This will send images back to the Dashboard.
+    outputStream = cs.putVideo("Tags Detected", width, height)
+
+    # Call the detection function
+    AprilTag_Detction()
