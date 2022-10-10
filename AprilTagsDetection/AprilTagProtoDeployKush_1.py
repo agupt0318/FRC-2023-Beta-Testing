@@ -59,8 +59,6 @@ def AprilTag_Detction():
             tagID = str(i.tag_id)
             cv2.putText(frame, tagID, (cX - 10, cY - 10),cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2, cv2.LINE_AA)
 
-            print(i.pose_R())
-
         fps_int = round(1.0/(time.time()-starttime+epsilon),2)
         fps = "FPS: "+str(fps_int)
         cv2.putText(frame,fps,(60,60),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))[2]
