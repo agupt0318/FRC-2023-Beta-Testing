@@ -10,10 +10,9 @@ Camera.fx: 1394.6027293299926
 Camera.fy: 1394.6027293299926
 Camera.cx: 995.588675691456
 Camera.cy: 599.3212928484164
-
 '''
 
-
+# draw pose estimations given pose_R, pose_T, and camera_params
 def draw_pose(overlay, camera_params, tag_size, pose_R, pose_T, z_sign=1):
    opoints = np.array([
       -1, -1, 0,
@@ -45,16 +44,17 @@ def draw_pose(overlay, camera_params, tag_size, pose_R, pose_T, z_sign=1):
    cv2.putText(overlay, 'Y', ipoints[2], font, 0.5, (0, 255, 0), 2, cv2.LINE_AA)
    cv2.putText(overlay, 'Z', ipoints[3], font, 0.5, (255, 0, 0), 2, cv2.LINE_AA)
 
-
+# camera params for logitech c920
 camera_params = [1394.6027293299926, 1394.6027293299926, 995.588675691456, 599.3212928484164]
-camera_params2 = np.array([[1394.6027293299920, 0, 995.588675691456], [0, 1394.6027293299926, 599.3212928484164], [0, 0, 1]]).reshape(3, 3)
+#camera_params2 = np.array([[1394.6027293299920, 0, 995.588675691456], [0, 1394.6027293299926, 599.3212928484164], [0, 0, 1]]).reshape(3, 3)
 # camera_params = (
 #    camera_params2[0, 0],
 #    camera_params2[1, 1],
 #    camera_params2[0, 2],
 #    camera_params2[1, 2]
 # )
-print(type(camera_params))
+
+# create detector
 at_detector = Detector(
    families="tag36h11",
    nthreads=1,
@@ -65,23 +65,27 @@ at_detector = Detector(
    debug=0
 )
 
+# set up video settings
 vid = cv2.VideoCapture(0)
-epsilon = 0.0000001
-
 vid.set(3, 640)
 vid.set(4, 480)
+
+# fps counter
+epsilon = 0.0000001
+
 while (True):
 
    ret, frame = vid.read() # read video frame
-   starttime = time.time()
+
+   starttime = time.time() # fps counter time tracker
 
    # detect april tags with their library
    img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
    #results = at_detector.detect(img)
-   # pose estimations:
+
+   # results of apriltags and pose estimations
    results = at_detector.detect(img, estimate_tag_pose=True, camera_params=camera_params, tag_size=0.206375)
 
-   print(results)
    # results outputs all april tags found -> loop through them
    for r in results:
       # find coordinates for each april tag found
@@ -101,17 +105,20 @@ while (True):
       # put point on center of april tag
       (cX, cY) = (int(r.center[0]), int(r.center[1]))
       cv2.circle(frame, (cX, cY), 5, (0, 0, 255), -1)
-      print(r.pose_R.shape)
+
+      # draw pose lines
       draw_pose(frame, camera_params, tag_size=0.206375, pose_R=r.pose_R, pose_T=r.pose_t, z_sign=1)
-      print(r)
+
       # find what id the tag has and save it + display
       tagID = str(r.tag_id)
       cv2.putText(frame, tagID, (ptA[0], ptA[1] - 50),
                   cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
 
+   # fps calculations after all other processes are done
    fps_int = round(1.0 / (time.time() - starttime + epsilon), 2)
    fps = "FPS: " + str(fps_int)
    cv2.putText(frame, fps, (60, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0))[2]
+
    # Display the resulting frame
    cv2.imshow('frame', frame)
 
@@ -120,6 +127,7 @@ while (True):
 
 # After the loop release the cap object
 vid.release()
+
 # Destroy all the windows
 cv2.destroyAllWindows()
 
