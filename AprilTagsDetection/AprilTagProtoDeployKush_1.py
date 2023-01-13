@@ -6,7 +6,7 @@ import logging
 import threading
 import numpy as np # strange dependancy for pose
 
-from pupil_apriltags import Detector # fgiure out how to put on rPi
+from pupil_apriltags import Detector # figure out how to put on rPi
 from networktables import NetworkTables as nt
 from cscore import CameraServer
 
