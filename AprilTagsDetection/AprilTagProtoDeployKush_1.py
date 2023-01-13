@@ -4,8 +4,9 @@ import time
 import math # might be used
 import logging
 import threading
+import numpy as np # strange dependancy for pose
 
-from pupil_apriltags import Detector
+from pupil_apriltags import Detector # fgiure out how to put on rPi
 from networktables import NetworkTables as nt
 from cscore import CameraServer
 
@@ -18,19 +19,47 @@ width = 320 # 1280 / 320 / 400
 # error value for calculating FPS
 epsilon = 0.0000001
 
+# camera parameters
+camera_params = [1394.6027293299926, 1394.6027293299926, 995.588675691456, 599.3212928484164]
+
 # Table update function
 def table_update(table,store):
-    
+
     # loop till the penultimate element and push that to nt
     for i in range(len(store)-1):
-        table.putNumber(f"Tag {i} content: ",store[i])
-
+        table.putNumber(store[i][0],store[i][1])
+    
     # push the fps number to nt
     table.putNumber("FPS: ",store[-1])
 
-# here when needed to translate tag id's into actions, perhaps
-def translator(tag_id):
-    pass
+def draw_pose(overlay, camera_params, tag_size, pose_R, pose_T, z_sign=1):
+   opoints = np.array([
+      -1, -1, 0,
+      1, -1, 0,
+      1, 1, 0,
+      1, -1, -2 * z_sign,
+   ]).reshape(-1, 1, 3) * 0.5 * tag_size
+
+   fx, fy, cx, cy = camera_params
+
+   K = np.array([fx, 0, cx, 0, fy, cy, 0, 0, 1]).reshape(3, 3)
+
+   rvec = pose_R
+   tvec = pose_T
+
+   dcoeffs = np.zeros(5)
+
+   ipoints = cv2.projectPoints(opoints, rvec, tvec, K, dcoeffs)[0]
+   ipoints = np.round(ipoints).astype(int)
+   ipoints = [tuple(pt) for pt in ipoints.reshape(-1, 2)]
+
+   cv2.line(overlay, ipoints[0], ipoints[1], (0, 0, 255), 2)
+   cv2.line(overlay, ipoints[1], ipoints[2], (0, 255, 0), 2)
+   cv2.line(overlay, ipoints[1], ipoints[3], (255, 0, 0), 2)
+   font = cv2.FONT_HERSHEY_SIMPLEX
+   cv2.putText(overlay, 'X', ipoints[0], font, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
+   cv2.putText(overlay, 'Y', ipoints[2], font, 0.5, (0, 255, 0), 2, cv2.LINE_AA)
+   cv2.putText(overlay, 'Z', ipoints[3], font, 0.5, (255, 0, 0), 2, cv2.LINE_AA)
 
 def AprilTag_Detction():
 
@@ -56,7 +85,7 @@ def AprilTag_Detction():
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
         # Detect tags in the grayscale frame
-        res = at_detector.detect(gray)
+        res = at_detector.detect(gray, estimate_tag_pose=True, camera_params=camera_params, tag_size=0.17) # tag_size is end to end distance in meters
 
         # store tag information computed later
         tags = []
@@ -81,12 +110,16 @@ def AprilTag_Detction():
             (cX, cY) = (int(i.center[0]), int(i.center[1]))
             cv2.circle(frame, (cX, cY), 5, (0, 0, 255), -1)
 
+            # draw pose of the tag courtesy of CADen Li
+            draw_pose(frame, camera_params, tag_size=0.206375, pose_R=i.pose_R, pose_T=i.pose_t, z_sign=1)
+
             # Extract the id of the current tag and draw it near the center
             tagID = str(i.tag_id)
+            dist = 0 # TODO: find dist
             cv2.putText(frame, tagID, (cX - 10, cY - 10),cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2, cv2.LINE_AA)
 
             # Add the tag id to to the tags list
-            tags.append(tagID)
+            tags.append((str(tagID),dist))
 
         # Compute FPS
         fps_int = round(1.0/(time.time()-starttime+epsilon),2)
