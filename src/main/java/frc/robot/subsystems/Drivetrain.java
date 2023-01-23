@@ -22,33 +22,29 @@ public class Drivetrain extends SubsystemBase {
   public static final double kMaxSpeed = 3.0; // meters per second
   public static final double kMaxAngularSpeed = 2 * Math.PI; // one rotation per second
 
-  private static final double kTrackWidth = 0.381 * 2; // meters
-  private static final double kWheelRadius = 0.0508; // meters
-  private static final int kEncoderResolution = 4096;
+  public static final double kTrackWidth = 0.381 * 2; // meters
+  public static final double kWheelRadius = 0.0508; // meters
+  public static final int kEncoderResolution = 4096;
 
   private final MotorController m_leftLeader = new WPI_TalonSRX(1);
   private final MotorController m_leftFollower = new WPI_TalonSRX(2); 
   private final MotorController m_rightLeader = new WPI_TalonSRX(3);
   private final MotorController m_rightFollower = new WPI_TalonSRX(4);
 
-  private final Encoder m_leftEncoder = new Encoder(0, 1);
-  private final Encoder m_rightEncoder = new Encoder(2, 3);
+  public final Encoder m_leftEncoder = new Encoder(0, 1);
+  public final Encoder m_rightEncoder = new Encoder(2, 3);
 
   private final MotorControllerGroup m_leftGroup =
       new MotorControllerGroup(m_leftLeader, m_leftFollower);
   private final MotorControllerGroup m_rightGroup =
       new MotorControllerGroup(m_rightLeader, m_rightFollower);
 
-  private final AnalogGyro m_gyro = new AnalogGyro(0);
+  public final AnalogGyro m_gyro = new AnalogGyro(0);
 
   private final PIDController m_leftPIDController = new PIDController(1, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(1, 0, 0);
 
-  private final DifferentialDriveKinematics m_kinematics =
-      new DifferentialDriveKinematics(kTrackWidth);
-
-  private final DifferentialDriveOdometry m_odometry;
-
+  private final Odometry m_odometry;
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
 
@@ -73,9 +69,7 @@ public class Drivetrain extends SubsystemBase {
     m_leftEncoder.reset();
     m_rightEncoder.reset();
 
-    m_odometry =
-        new DifferentialDriveOdometry(
-            m_gyro.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+    m_odometry = new Odometry(this);
   }
 
   /**
@@ -102,13 +96,6 @@ public class Drivetrain extends SubsystemBase {
    * @param rot Angular velocity in rad/s.
    */
   public void drive(double xSpeed, double rot) {
-    var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0.0, rot));
-    setSpeeds(wheelSpeeds);
-  }
-
-  /** Updates the field-relative position. */
-  public void updateOdometry() {
-    m_odometry.update(
-        m_gyro.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+    setSpeeds(m_odometry.expose_kinematics().toWheelSpeeds(new ChassisSpeeds(xSpeed, 0D, rot)));
   }
 }
