@@ -1,0 +1,25 @@
+public static final double kS;
+public static final double kV;
+public static final double kA;
+public static final double kG;
+
+public static final double kP;
+public static final double kI;
+public static final double kD;
+
+private final feedforward = new ArmFeedforward(kS, kG, kV);
+private final controller = new ProfiledPIDController(kP, kI, kD, new TrapezoidProfile.Constraints(kMaxVelocity, kMaxAcceleration));
+
+double m_feedforward;
+double m_pid;
+double setpoint;
+
+periodic()
+{
+  setpoint = controller.getSetpoint();
+  m_pid = pid.calculate(encoder.getDistance(), setpoint)
+  m_feedforward = feedforward.calculate(setpoint, velocitySetpoint); //velocitySetpoint usually 0
+  
+  motor.set(m_pid + m_feedforward);
+}
+  
