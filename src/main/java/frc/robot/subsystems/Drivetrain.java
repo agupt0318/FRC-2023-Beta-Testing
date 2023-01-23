@@ -67,7 +67,7 @@ public class Drivetrain extends SubsystemBase {
 
     public void update()
     {
-        p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_rightEncoder.getDistance());
+      p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_rightEncoder.getDistance());
     }
   }
 
