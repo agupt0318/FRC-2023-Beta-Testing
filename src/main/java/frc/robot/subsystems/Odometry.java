@@ -18,10 +18,9 @@ public final class Odometry
     {
         KINE = new DifferentialDriveKinematics(Drivetrain.kTrackWidth);
         this.drive = drive;
-        odom = new DifferentialDriveOdometry(drive.m_gyro.getRotation2d(), , 0D);
+        odom = new DifferentialDriveOdometry(drive.m_gyro.getRotation2d(), 0D, 0D);
     }
     
-
     public DifferentialDriveKinematics expose_kinematics()
     {
         return KINE;
@@ -37,18 +36,18 @@ public final class Odometry
         return drive.m_gyro.getRotation2d();
     }
 
-    public double expose_left_encoder_dist()
+    public double left_encoder()
     {
         return drive.m_leftEncoder.getDistance();
     }
 
-    public double expose_right_encoder_dist()
+    public double right_encoder()
     {
         return drive.m_rightEncoder.getDistance();
     }
 
-    @Override public void periodic()
+    public void update()
     {
-        odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_RightEncoder.getDistance());
+        p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_RightEncoder.getDistance());
     }
 }
