@@ -7,8 +7,8 @@ public static final double kP;
 public static final double kI;
 public static final double kD;
 
-private final feedforward = new ArmFeedforward(kS, kG, kV);
-private final controller = new ProfiledPIDController(kP, kI, kD, new TrapezoidProfile.Constraints(kMaxVelocity, kMaxAcceleration));
+public final feedforward = new ArmFeedforward(kS, kG, kV);
+public final controller = new ProfiledPIDController(kP, kI, kD, new TrapezoidProfile.Constraints(kMaxVelocity, kMaxAcceleration));
 
 double m_feedforward;
 double m_pid;
