@@ -7,6 +7,8 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -65,7 +67,7 @@ public class Drivetrain extends SubsystemBase {
 
     public void update()
     {
-        p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_RightEncoder.getDistance());
+        p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_rightEncoder.getDistance());
     }
   }
 
@@ -151,7 +153,7 @@ public class Drivetrain extends SubsystemBase {
 
   public void resetOdom()
   {
-    m_odometry.expose_odometry().resetPosition(m_gyro.getRotation2d(), m_odometry.left_encoder(), m_odometry.right_encoder())
+    m_odometry.expose_odometry().resetPosition(m_gyro.getRotation2d(), m_odometry.left_encoder(), m_odometry.right_encoder(), Odometry.construct_p2(m_odometry.left_encoder(), m_odometry.right_encoder(), m_gyro.getAngle()));
   }
 
   @Override public void periodic()
