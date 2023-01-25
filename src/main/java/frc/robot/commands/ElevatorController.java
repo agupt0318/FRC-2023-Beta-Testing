@@ -34,7 +34,7 @@ public class ElevatorController extends CommandBase {
   @Override
   public void execute() {
     double desiredHeight = e_controller.getLeftY() * 0.5;
-    m_elevatorSubsystem.setSetpoint(desiredHeight);
+    m_elevatorSubsystem.setSetPoint(desiredHeight);
     System.out.println("test");
   }
 

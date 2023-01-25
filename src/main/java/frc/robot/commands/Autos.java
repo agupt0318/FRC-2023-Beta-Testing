@@ -5,13 +5,28 @@
 package frc.robot.commands;
 
 import frc.robot.subsystems.ExampleSubsystem;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Commands;
 
+import java.util.Arrays;
+
+import com.pathplanner.lib.*;
+
 public final class Autos {
-  /** Example static factory for an autonomous command. */
-  public static CommandBase exampleAuto(ExampleSubsystem subsystem) {
-    return Commands.sequence(subsystem.exampleMethodCommand(), new ExampleCommand(subsystem));
+  public static final PathPlannerTrajectory[] AUTO_PATHS = 
+  {
+    PathPlanner.generatePath(new PathConstraints(4, 5), Arrays.asList(
+      new PathPoint[]
+      {
+        new Translation2d(10, Rotation2d.fromDegrees(300));
+      }
+    ))
+  };
+  public static void load(final CharSequence fileName, PathConstraints defaultConstraints)
+  {
+    
   }
 
   private Autos() {

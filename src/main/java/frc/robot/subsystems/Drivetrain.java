@@ -69,6 +69,8 @@ public class Drivetrain extends SubsystemBase {
     {
       p2 = odom.update(drive.m_gyro.getRotation2d(), drive.m_leftEncoder.getDistance(), drive.m_rightEncoder.getDistance());
     }
+
+
   }
 
   public static final double kMaxSpeed = 3.0; // meters per second
