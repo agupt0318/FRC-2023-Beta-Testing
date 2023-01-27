@@ -1,0 +1,8 @@
+import frc.robot.commands.FourBarArmController;
+import frc.robot.subsystems.FourBarArm;
+
+private final FourBarArm fourBarArm = new FourBarArm(); 
+
+this.fourBarArm.setDefaultCommand(
+        new FourBarArmController(fourBarArm, xboxOperator)
+    );
