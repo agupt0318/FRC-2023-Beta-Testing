@@ -36,7 +36,8 @@ public class Corrigan extends CommandBase {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    // reset encoder here!!!!
+    m_armSubsytem.reset();
+    m_elevatorSubsytem.reset();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -44,9 +45,9 @@ public class Corrigan extends CommandBase {
   public void execute() {
     // yay variables to make my life easier
     double armEncoderValue = m_armSubsystem.getEncoderValue();
-    double armEncoderValueInRadians = armEncoderValue * ((2 * Math.PI)/2048); // convert from encoder values to radians
+    double armEncoderValueInRadians = // convert from encoder values to radians
     double elevatorEncoderValue = m_elevatorSubsystem.getEncoderValue();
-    double elevatorEncoderValueInRadians = elevatorEncoderValue * ((2 * Math.PI)/2048);
+    double elevatorEncoderValueInRadians = // convert from encoder values to radians 
     
     // medium stick is A button
     if (e_controller.getAButton().getAsBoolean() && !lastToggle) {
