@@ -1,13 +1,6 @@
-// code to add in robot container
-import frc.robot.commands.FourBarArmController;
-import frc.robot.subsystems.FourBarArm;
-
-private final FourBarArm fourBarArm = new FourBarArm(); 
-
-this.fourBarArm.setDefaultCommand(
-        new FourBarArmController(fourBarArm, xboxOperator)
-    );
-
-
 // how to brake for the pivot arm
 talon.setNeutralMode(NeutralMode.Brake)
+
+
+// things to do
+elevator pid controller not in actual branch
