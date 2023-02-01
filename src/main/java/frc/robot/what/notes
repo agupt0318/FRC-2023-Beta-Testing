@@ -4,3 +4,12 @@ talon.setNeutralMode(NeutralMode.Brake)
 
 // things to do
 elevator pid controller not in actual branch
+
+// things to do for corrigan.java
+set percent output zero 
+
+WRITE getEncoderValue() IN ELEVATOR AND ARM
+public int getEncoderValue()
+{
+	return talon.getSensorCollection().getIntegratedSensorPosition();
+}
